@@ -82,7 +82,11 @@ class Scraper:
     cleaned = flatList
     #filter out unwanted links
     for i in range(len(cleaned)):
-      if "t3_" in i or ""
+      if "t3_" in cleaned[i] or any(p in cleaned[i] for p in IMAGE_SOURCES):
+        pass
+      else:
+        cleaned[i] = ""
+    cleaned[:] = [x for x in cleaned if x != ""]
     return cleaned
 
 
