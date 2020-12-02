@@ -4,7 +4,7 @@ import time
 import re
 
 #Global variables
-SUBREDDITS = ["yuri"]
+SUBREDDITS = ["massivefangs"]
 BOORUS = []
 IMAGE_LIMIT = 10
 IMAGE_SOURCES = ["twitter", "pixiv", "imgur", "booru", "rule34", "tumblr", "pinterest"]
@@ -14,7 +14,7 @@ print("Connecting to Reddit & Pushshift...")
 startT = time.time()
 reddit = praw.Reddit(client_id="6Gm2kQcpi-S2jA",    
                     client_secret="1DitcX_XxE0xirKwi2s7apP-vP2LyQ",
-                    user_agent="Python Reddit-Booru Web Scraper V0.1 (By /u/KhanSimeoni)")
+                    user_agent="Python Reddit-Booru Web redditScraper V0.1 (By /u/KhanSimeoni)")
 pushshift = PushshiftAPI(reddit)
 
 #Check if connected
@@ -24,8 +24,8 @@ if reddit.read_only == True:
 else:
   print("Connection Error to reddit \n")
 
-
-class Scraper:
+#class for scraping reddit (and pushshift) for posts with source links, as well as getting information about the post such as score and postID. This information can also be sorted into a list for further use.
+class redditScraper:
 #connect to a subreddit - takes in a single string
   def subConnect(self, subreddit):
     subreddit = reddit.subreddit(subreddit)
@@ -88,15 +88,33 @@ class Scraper:
         cleaned[i] = ""
     cleaned[:] = [x for x in cleaned if x != ""]
     return cleaned
+    
+  #add score and percent upvoted to the list, staggered in the format [postID1, score1, percent1, link1, postID2, score2, percent2, link2, ...]
+  def linkScore(self, subreddit, data):
+    finished = []
+    previous = ""
+    for i in range(len(data)):
+      if "t3_" in data[i]:
+        previous = data[i]
+        finished.append(data[i])
+      elif previous != "":
+        post = reddit.submission(id=previous.replace("t3_", ""))
+        finished.append(post.score)
+        finished.append(post.upvote_ratio)
+        finished.append(data[i])
+    return finished
 
 
 
 #run the program
-scraper = Scraper()
+
+#scrape reddit and aquire a list of information about each post, in the format [postID1, score1, percent1, link1, postID2, score2, percent2, link2, ...] 
+scraper = redditScraper()
 sub = scraper.subConnect(SUBREDDITS[0])
 print(sub, ":")
 com = scraper.subComLinks(SUBREDDITS[0], IMAGE_LIMIT)
 links = scraper.linkFilter(com)
 posts = scraper.comPosts(SUBREDDITS[0], IMAGE_LIMIT)
 clean = scraper.linkClean(links, posts)
-print(clean)
+final = scraper.linkScore(SUBREDDITS[0], clean)
+print(final)
